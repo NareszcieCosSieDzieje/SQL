@@ -1,0 +1,1216 @@
+----------------------------------------------------------------------------------------------------------------------------
+ 							--Język SQL. Rozdział 2. Proste zapytania – zadania
+ 	--1.
+ 	SELECT id_zesp, nazwa, adres 
+	FROM zespoly;
+	
+	--2.
+	SELECT *
+	FROM pracownicy;
+	
+	--3.
+	SELECT nazwisko, placa_pod*12
+	FROM pracownicy;
+	
+	--4.
+	SELECT etat, 
+	COALESCE(placa_pod,0)+COALESCE(placa_dod,0) AS "MIESIECZNE_ZAROBKI"
+	FROM pracownicy;
+	
+	--5.
+	SELECT *
+	FROM zespoly
+	ORDER BY nazwa ASC;
+	
+	--6.
+	SELECT DISTINCT etat
+	FROM pracownicy
+	ORDER BY etat;
+	
+	--7.
+	SELECT *
+	FROM pracownicy
+	WHERE etat = 'ASYSTENT'
+	ORDER BY id_prac ASC;
+	
+	--8.
+	SELECT id_prac,nazwisko,etat,placa_pod,id_zesp
+	FROM pracownicy
+	WHERE id_zesp IN(30,40)
+	ORDER BY placa_pod DESC;
+	
+	--9.
+	SELECT nazwisko, id_zesp, placa_pod
+	FROM pracownicy
+	WHERE placa_pod BETWEEN 300 AND 800;
+	
+	--10.
+	SELECT nazwisko, etat, id_zesp
+	FROM pracownicy
+	WHERE nazwisko LIKE '%SKI';
+	
+	--11.
+	SELECT id_prac, id_szefa,nazwisko,placa_pod
+	FROM pracownicy
+	WHERE placa_pod > 1000 AND id_szefa IS NOT NULL;
+    
+    --12.
+    SELECT nazwisko, id_zesp
+	FROM pracownicy
+	WHERE id_zesp = 20 AND ( nazwisko LIKE 'M%' OR nazwisko LIKE '%SKI' );
+	
+	--13.
+	SELECT nazwisko, etat, placa_pod/(20*8) AS STAWKA
+	FROM pracownicy
+	WHERE (etat != 'ASYSTENT') AND (etat != 'STAZYSTA') AND (placa_pod NOT BETWEEN 400 AND 800)
+	ORDER BY STAWKA ASC;
+	
+	--14.
+	SELECT nazwisko,etat,placa_pod,placa_dod
+	FROM pracownicy
+	WHERE (COALESCE(placa_pod,0)+COALESCE(placa_dod,0)) > 1000
+	ORDER BY etat ASC, nazwisko ASC;
+	
+	--15.
+	SELECT nazwisko || ' pracuje od ' || TO_CHAR(zatrudniony, 'dd-mm-yyyy') || ' i zarabia ' || placa_pod AS "PROFESOROWIE"
+	FROM pracownicy
+	WHERE etat = 'PROFESOR';
+-----------------------------------------------------------------------------------------------------------------------------------
+									 Język SQL. Rozdział 3. Zaawansowana selekcja danych – zadania 
+	--1.
+	SELECT nazwisko, SUBSTR(etat,0,2) || id_prac AS KOD
+	FROM pracownicy;
+	
+	--2.
+	SELECT nazwisko, 
+	TRANSLATE(nazwisko,'KLM','XXX') AS WOJNA_LITEROM
+	FROM pracownicy;
+	
+	--3.
+	SELECT nazwisko
+	FROM pracownicy
+	WHERE SUBSTR(nazwisko,0,FLOOR(LENGTH(nazwisko)/2)) LIKE '%L%';
+	
+	--4.
+	SELECT nazwisko, ROUND(placa_pod*1.15,0) AS PODWYZKA
+	FROM pracownicy;
+	
+	--5.
+	SELECT nazwisko, placa_pod, 
+	placa_pod*0.2 AS INWESTYCJA, 
+	placa_pod*0.2*POWER(1.1,10) AS KAPITAL, 
+	placa_pod*0.2*POWER(1.1,10) - placa_pod*0.2 AS ZYSK
+	FROM pracownicy;
+	
+	--6.
+	SELECT nazwisko,
+	TO_CHAR(zatrudniony,'YY/MM/DD') AS ZATRUDNIONY, 
+	EXTRACT(YEAR FROM (DATE '2000-01-01' - zatrudniony)YEAR TO MONTH) AS STAZ_W_2000
+	FROM pracownicy;
+	
+	--7.
+	SELECT nazwisko,
+	TO_CHAR(zatrudniony, 'MONTH, DD YYYY') AS DATA_ZATRUDNIENIA
+	FROM pracownicy
+	WHERE id_zesp = 20;
+	
+	--8.
+	SELECT TO_CHAR(CURRENT_DATE,'day') AS "CURRENT DAY" FROM dual ;
+	
+	--9.
+	SELECT nazwa, adres,
+	CASE adres
+		WHEN 'PIOTROWO 3A' THEN 'NOWE MIASTO'
+		WHEN 'STRZELECKA 14' THEN 'STARE MIASTO'
+		WHEN 'WLODKOWICZA 16' THEN 'GRUNDWALD'
+		WHEN 'MIELZYNSKIEGO 30' THEN 'STARE MIASTO'
+		ELSE 'NIEZNANA'
+	END AS DZIELNICA
+	FROM zespoly
+	
+	--10.
+	SELECT nazwisko, placa_pod,	
+	CASE
+		WHEN COALESCE(placa_pod,0) > 480 THEN 'POWYZEJ 480'
+		WHEN COALESCE(placa_pod,0) = 480 THEN 'DOKLADNIE 480'
+		WHEN COALESCE(placa_pod,0) < 480 THEN 'PONIZEJ 480'
+		ELSE 'NULL'
+	END AS PROG
+	FROM pracownicy;
+	
+	--11.
+	SELECT nazwisko, placa_pod,
+DECODE( COALESCE(TRUNC(placa_pod/480,0),0) ,  
+	   1, 'DOKLADNIE 480',
+	   0, 'PONIZEJ 480',
+	   'POWYZEJ 480'
+	  ) AS "PROG"
+FROM pracownicy;
+--------------------------------------------------------------------------------------------------------------------------
+							4. Język SQL. Rozdział 4.Funkcje grupowe
+
+	--1.
+	SELECT MIN(placa_pod) as MINIMUM,
+	MAX(placa_pod) as MAXIMUM,
+	MAX(placa_pod) - MIN(placa_pod) as ROZNICA 
+	FROM pracownicy;
+	
+	--2.
+	SELECT etat, AVG(placa_pod) AS SREDNIA
+	FROM pracownicy
+	GROUP BY etat
+	ORDER BY SREDNIA DESC;
+	
+	--3.
+	SELECT COUNT(*) AS "PROFESOROWIE"
+	FROM pracownicy
+	WHERE etat = 'PROFESOR';
+	
+	--4.
+	SELECT id_zesp,SUM(COALESCE(placa_pod,0)) + SUM(COALESCE(placa_dod,0)) AS suma
+	FROM pracownicy
+	GROUP BY id_zesp
+	ORDER BY id_zesp ASC;
+	
+	--5.
+	SELECT MAX(SUM(COALESCE(placa_pod,0)) + SUM(COALESCE(placa_dod,0))) AS MAKS
+	FROM pracownicy
+	GROUP BY id_zesp
+	ORDER BY id_zesp ASC;
+	
+	--6.
+    SELECT id_szefa, MIN(placa_pod) AS minimalna
+FROM pracownicy
+WHERE id_szefa IS NOT NULL
+GROUP BY id_szefa
+ORDER BY minimalna DESC
+	
+	--7.
+	SELECT id_zesp, 
+	COUNT(*) AS liczba_pracownikow
+	FROM pracownicy
+	GROUP BY id_zesp
+	ORDER BY liczba_pracownikow DESC;
+	
+	--8.
+	SELECT id_zesp, 
+	COUNT(*) AS liczba_pracownikow
+	FROM pracownicy
+	GROUP BY id_zesp
+	HAVING COUNT(*) > 3
+	ORDER BY liczba_pracownikow DESC;
+	
+	--9.
+	SELECT id_prac
+	FROM pracownicy
+	GROUP BY id_prac
+	HAVING COUNT(*) > 1;
+	
+	--10.
+	SELECT AVG(placa_pod) as "SREDNIA", COUNT(*) as "LICZBA NA ETACIE"
+	FROM pracownicy
+	WHERE EXTRACT(YEAR FROM zatrudniony) > 1990
+	GROUP BY etat;
+	
+	--11.
+	SELECT id_zesp,
+	etat,
+	ROUND(AVG(COALESCE(placa_pod,0) + COALESCE(placa_dod,0) ), 0) AS SREDNIA,
+	ROUND(MAX( COALESCE(placa_pod,0) + COALESCE(placa_dod,0) ), 0) as MAKS
+	FROM pracownicy
+	WHERE etat IN('PROFESOR','ASYSTENT')
+	GROUP BY id_zesp, etat
+	ORDER BY id_zesp, etat;
+	
+	--12. 
+	SELECT EXTRACT(YEAR FROM zatrudniony) AS "ROK",
+COUNT(*) AS "ILU_PRACOWNIKOW"
+FROM pracownicy 
+GROUP BY EXTRACT(YEAR FROM zatrudniony)
+ORDER BY ROK ASC
+	
+	--13.
+	SELECT COUNT(*) AS "LICZBA LUDZI Z TAKA ILOSCIA",
+	LENGTH(nazwisko) as "DLUGOSC NAZWISKA"
+	FROM pracownicy
+	GROUP BY LENGTH(nazwisko)
+	ORDER BY "DLUGOSC NAZWISKA";
+	
+	--14.
+	SELECT COUNT(*) as "LICZBA PRAC"
+	FROM pracownicy
+	WHERE nazwisko LIKE '%a%' or nazwisko LIKE '%A%';
+	
+	--15.
+SELECT 
+    COUNT( CASE WHEN (nazwisko like '%a%' or nazwisko like '%A%') THEN 1 ELSE null END ) AS "A",
+    COUNT( CASE WHEN (nazwisko like '%e%' or nazwisko like '%E%') THEN 1 ELSE null END ) AS "B"
+from pracownicy;
+	
+	--16.
+	SELECT id_zesp, SUM(placa_pod) as "SUMA",
+	LISTAGG(nazwisko, ',') 
+	WITHIN GROUP (ORDER BY nazwisko) AS "pracownicy"
+	FROM pracownicy
+	GROUP BY id_zesp
+	ORDER BY id_zesp;
+	---------------------ZROBIONE OBCZAJ SOBIE KIEDYS-------
+
+----------------------------------------Język SQL. Rozdział 5a.Połączenia –podstawy-----------------------------------
+
+-- PIERWSZE JAWNA DRUGIE NIEJAWNA
+
+	--1.
+	SELECT nazwisko, etat, id_zesp, nazwa
+	FROM pracownicy NATURAL JOIN zespoly
+	ORDER BY nazwisko ASC;
+	
+	--2.
+	SELECT nazwisko, etat, id_zesp, nazwa
+	FROM pracownicy NATURAL JOIN zespoly
+	WHERE adres IN('PIOTROWO 3A')
+	ORDER BY nazwisko ASC;
+	
+	--3.
+	SELECT nazwisko, etat, COALESCE(placa_pod,0), placa_min, placa_max
+	FROM pracownicy INNER JOIN etaty
+	ON etat=nazwa
+	ORDER BY etat, nazwisko ASC;
+	
+	--4.
+	SELECT nazwisko, etat, COALESCE(placa_pod,0), placa_min, placa_max,
+CASE
+	WHEN placa_pod BETWEEN placa_min AND placa_max THEN 'OK'
+	ELSE 'NIE OK'
+END AS "CZY PENSJA OK"
+FROM pracownicy INNER JOIN etaty
+ON etat=nazwa
+ORDER BY etat, nazwisko ASC;
+	
+	--5.
+SELECT nazwisko,
+CASE
+	WHEN placa_pod NOT BETWEEN placa_min AND placa_max THEN 'ANOMALIA'
+	ELSE 'NORMA'
+END AS "DANE"
+FROM pracownicy INNER JOIN etaty
+ON etat=nazwa;
+	
+	--6.
+	SELECT nazwisko, placa_pod, etat, nazwa AS "KAT_PLAC", placa_min, placa_max
+FROM pracownicy INNER JOIN etaty
+ON etat=nazwa
+ORDER BY nazwisko, KAT_PLAC ASC;
+	
+	--7.
+SELECT nazwisko, placa_pod, etat, nazwa AS "KAT_PLAC", placa_min, placa_max
+FROM pracownicy INNER JOIN etaty
+	ON placa_pod >= placa_min AND placa_pod <=placa_max 
+WHERE nazwa IN('SEKRETARKA')
+ORDER BY nazwisko ASC;
+	
+	--8.
+	SELECT p.nazwisko AS PRAC, p.id_prac, s.nazwisko AS SZEF, s.id_prac
+FROM pracownicy p INNER JOIN pracownicy s
+ON p.id_szefa = s.id_prac
+WHERE p.id_szefa IS NOT NULL
+ORDER BY p.nazwisko;
+	
+	--9.
+	SELECT p.nazwisko AS PRAC, p.id_prac, p.zatrudniony, s.nazwisko AS SZEF, s.id_prac, s.zatrudniony, (p.zatrudniony - s.zatrudniony)YEAR TO MONTH  as LATA
+FROM pracownicy p INNER JOIN pracownicy s
+ON p.id_szefa = s.id_prac
+WHERE p.id_szefa IS NOT NULL
+AND EXTRACT(YEAR FROM ((p.zatrudniony - s.zatrudniony)YEAR TO MONTH)) <=10
+ORDER BY p.zatrudniony, p.nazwisko;
+	
+	--10.
+	SELECT nazwa, COUNT(*) AS LICZBA, AVG(placa_pod) AS SREDNIA 
+FROM pracownicy INNER JOIN zespoly
+ON pracownicy.id_zesp = zespoly.id_zesp
+GROUP BY nazwa
+ORDER BY nazwa;
+	--11.
+	SELECT nazwa, 
+CASE
+	WHEN COUNT(*) BETWEEN 1 AND 2 THEN 'maly'
+	WHEN COUNT(*) BETWEEN 3 AND 6 THEN 'sredni'
+	WHEN COUNT(*) >= 7 THEN 'duzy'
+	ELSE 'BLAD'
+END AS ETYKIETA
+FROM pracownicy INNER JOIN zespoly
+ON pracownicy.id_zesp = zespoly.id_zesp
+WHERE pracownicy.id_zesp IS NOT NULL
+GROUP BY nazwa
+ORDER BY nazwa;
+
+--------------------------------------Język SQL. Rozdział 5b.Połączenia – konstrukcje zaawansowane
+
+	--1.
+SELECT nazwisko, pracownicy.id_zesp, nazwa 
+FROM pracownicy LEFT OUTER JOIN zespoly
+ON pracownicy.id_zesp = zespoly.id_zesp
+ORDER BY nazwisko;
+	
+	--2.
+		SELECT nazwa, zespoly.id_zesp,
+	CASE
+		WHEN pracownicy.id_zesp IS NULL THEN '----BRAK----'
+		ELSE nazwisko
+	END AS pracownik
+	FROM zespoly LEFT OUTER JOIN pracownicy
+	ON pracownicy.id_zesp = zespoly.id_zesp
+	ORDER BY nazwa, nazwisko;
+	
+	--3.
+		SELECT 
+	CASE
+		WHEN zespoly.id_zesp IS NOT NULL THEN nazwa
+		ELSE 'BRAK ZESPOLU'
+	END AS "ZESPOL",
+	CASE
+		WHEN pracownicy.id_zesp IS NOT NULL THEN nazwisko
+		ELSE 'BRAK PRACOWNIKOW'
+	END AS "PRACOWNIK"
+	FROM pracownicy FULL OUTER JOIN zespoly 
+	ON pracownicy.id_zesp = zespoly.id_zesp 
+	ORDER BY nazwa,nazwisko;
+        -- lol czy to ma sens xd--------------------------TODO--------------------------
+	
+	--4.
+	SELECT nazwa AS ZESPOL, COUNT(pracownicy.id_zesp) AS liczba, SUM(COALESCE(placa_pod,0)) AS SUMA_PLAC
+	FROM zespoly LEFT OUTER JOIN pracownicy
+	ON zespoly.id_zesp = pracownicy.id_zesp
+	GROUP BY nazwa
+	ORDER BY nazwa;
+		
+	--5.
+	SELECT nazwa 
+	FROM zespoly LEFT OUTER JOIN pracownicy
+	ON zespoly.id_zesp = pracownicy.id_zesp
+	WHERE pracownicy.id_zesp IS NULL
+	ORDER BY nazwa;
+------------------NIBY DZIALA ALE SPRAWDZ JESZCZE
+	
+	--6.
+	SELECT p.nazwisko AS PRAC , p.id_prac, s.nazwisko AS SZEF, s.id_prac
+	FROM pracownicy p LEFT OUTER JOIN pracownicy s
+	ON p.id_szefa = s.id_prac
+	ORDER BY p.nazwisko;
+
+	--7.
+	SELECT s.nazwisko,COUNT(p.nazwisko) AS "liczba_podwladnych"
+	FROM pracownicy s LEFT OUTER JOIN pracownicy p
+	ON s.id_prac = p.id_szefa
+	GROUP BY s.nazwisko 
+	ORDER BY s.nazwisko ASC;
+
+	--8.
+		SELECT pracownik.nazwisko AS "PRACOWNIK",
+	pracownik.etat AS "ETAT",
+	pracownik.placa_pod AS "PLACA",
+	zespoly.nazwa AS "ZESPOL",
+	szef.nazwisko AS "SZEF"
+	FROM pracownicy pracownik LEFT OUTER JOIN pracownicy szef
+		ON pracownik.id_szefa = szef.id_prac
+	LEFT OUTER JOIN zespoly 
+		ON zespoly.id_zesp = pracownik.id_zesp
+	ORDER BY pracownik.nazwisko ASC;
+
+	--9.
+ 	SELECT nazwisko,nazwa
+	FROM pracownicy CROSS JOIN zespoly
+	ORDER BY nazwisko;
+
+	--10.
+	SELECT COUNT(*) AS "liczba"
+	FROM etaty CROSS JOIN pracownicy CROSS JOIN zespoly;
+
+										Operatory zbiorowe –zadania
+	--11.
+
+	SELECT nazwa
+	FROM etaty JOIN pracownicy
+		ON etaty.nazwa = pracownicy.etat
+	WHERE EXTRACT(YEAR FROM pracownicy.zatrudniony) = 1992
+	INTERSECT
+	SELECT nazwa
+	FROM etaty JOIN pracownicy
+		ON etaty.nazwa = pracownicy.etat
+	WHERE EXTRACT(YEAR FROM pracownicy.zatrudniony) = 1993
+	ORDER BY nazwa;
+
+	--12.
+	SELECT zespoly.id_zesp AS "NUMER"
+	FROM zespoly LEFT OUTER JOIN pracownicy
+		ON zespoly.id_zesp = pracownicy.id_zesp
+		WHERE pracownicy.id_zesp IS NULL
+	ORDER BY zespoly.id_zesp;
+
+	--13.
+		SELECT zespoly.id_zesp AS "NUMER", zespoly.nazwa
+	FROM zespoly LEFT OUTER JOIN pracownicy
+		ON zespoly.id_zesp = pracownicy.id_zesp
+		WHERE pracownicy.id_zesp IS NULL
+	ORDER BY zespoly.id_zesp;
+	---------------------------------------------------------czy 12 i 13 serio tak xD?
+
+	--14.
+		SELECT nazwisko AS "NAZWISKO",
+	placa_pod AS "PLACA", 
+	'PONIZEJ 480' AS "PROG"
+	FROM pracownicy
+	WHERE placa_pod<480
+		UNION
+	SELECT nazwisko AS "NAZWISKO",
+	placa_pod AS "PLACA", 
+	'DOKLADNIE 480' AS "PROG"
+	FROM pracownicy
+	WHERE placa_pod=480
+		UNION
+	SELECT nazwisko AS "NAZWISKO",
+	placa_pod AS "PLACA", 
+	'POWYZEJ 480' AS "PROG"
+	FROM pracownicy
+	WHERE placa_pod>480
+	ORDER BY placa_pod ASC;
+	-- czesciowo dziala----------------------------------------------
+
+
+--------------------------------Język SQL. Rozdział 6a.Podzapytania –podstawy-----------------------
+
+	--1.
+		SELECT nazwisko,etat,id_zesp
+	FROM pracownicy
+	WHERE id_zesp =
+	 	(SELECT id_zesp FROM pracownicy WHERE nazwisko = 'BRZEZINSKI')
+	ORDER BY nazwisko;
+
+	--2.
+		SELECT nazwisko,etat,nazwa
+	FROM pracownicy INNER JOIN zespoly
+		ON pracownicy.id_zesp = zespoly.id_zesp
+	WHERE pracownicy.id_zesp =
+	 	(SELECT pracownicy.id_zesp FROM pracownicy WHERE nazwisko = 'BRZEZINSKI')
+	ORDER BY nazwisko;
+
+	--3.
+		SELECT nazwisko, etat, TO_CHAR(zatrudniony,'DAY MM YYYY') AS "DATA_ZATRUDNIENIA"
+	FROM pracownicy
+	WHERE (etat,zatrudniony) =
+	      (SELECT 'PROFESOR', MIN(zatrudniony)
+		   FROM pracownicy WHERE etat = 'PROFESOR');
+
+	--4.
+		SELECT nazwisko,TO_CHAR(zatrudniony,'dd/mm/yyyy') AS "ZATRUDNIONY" ,id_zesp
+	FROM pracownicy
+	WHERE (zatrudniony,id_zesp) IN 
+	 	(SELECT MAX(zatrudniony),id_zesp 
+		 FROM pracownicy
+		GROUP BY id_zesp)
+	ORDER BY zatrudniony;
+	
+	--5.
+	SELECT *
+	FROM zespoly
+	WHERE id_zesp NOT IN
+	(SELECT id_zesp FROM pracownicy);
+
+	--6.
+		SELECT p1.nazwisko
+	FROM pracownicy p1 LEFT OUTER JOIN pracownicy p2
+		ON p1.id_prac = p2.id_szefa
+	WHERE p1.etat = 'PROFESOR' AND p2.id_szefa NOT IN
+	(SELECT id_szefa 
+		 FROM pracownicy 
+		 WHERE etat = 'STAZYSTA' );
+
+	--7.
+		SELECT z.id_zesp, SUM(p.placa_pod)
+	FROM zespoly z LEFT OUTER JOIN pracownicy p 
+	ON z.id_zesp = p.id_zesp
+	GROUP BY z.id_zesp
+	HAVING SUM(p.placa_pod) =
+			(SELECT MAX(SUM(placa_pod)) 
+			 FROM pracownicy 
+			 GROUP BY id_zesp)
+
+	--8.
+		SELECT z.nazwa, SUM(p.placa_pod)
+	FROM zespoly z LEFT OUTER JOIN pracownicy p 
+		ON z.id_zesp = p.id_zesp
+	GROUP BY z.id_zesp,z.nazwa
+	HAVING SUM(p.placa_pod) =
+			(SELECT MAX(SUM(placa_pod)) 
+			 FROM pracownicy 
+			 GROUP BY id_zesp)
+
+	--9.
+	SELECT nazwa, COUNT(*) AS "PRACOWNICY"
+		FROM zespoly z INNER JOIN pracownicy p ON z.id_zesp = p.id_zesp
+	GROUP BY z.id_zesp,nazwa
+	HAVING COUNT(*) >
+		(SELECT COUNT(*)
+		 FROM zespoly z1 INNER JOIN pracownicy p1 ON z1.id_zesp = p1.id_zesp
+		 WHERE nazwa = 'ADMINISTRACJA')
+	ORDER BY nazwa;	
+
+	--10.
+		SELECT etat
+	FROM pracownicy
+	GROUP BY etat
+	HAVING COUNT(*) IN
+		(SELECT MAX(COUNT(*))
+		FROM pracownicy
+		GROUP BY etat);
+	
+	--11.
+		SELECT etat, LISTAGG(nazwisko, '--') WITHIN GROUP (ORDER BY nazwisko) AS "PRACOWNICY"
+	FROM pracownicy
+	GROUP BY etat
+	HAVING COUNT(*) IN
+		(SELECT MAX(COUNT(*))
+		FROM pracownicy
+		GROUP BY etat);
+					
+	--12.
+		SELECT p.nazwisko AS "PRACOWNIK", s.nazwisko AS "SZEF"
+	FROM pracownicy p RIGHT OUTER JOIN pracownicy s
+		ON p.id_szefa = s.id_prac
+	WHERE ABS(s.placa_pod-p.placa_pod) =
+			(SELECT MIN(ABS(s.placa_pod-p.placa_pod))
+			FROM pracownicy p RIGHT OUTER JOIN pracownicy s
+			ON p.id_szefa = s.id_prac)
+
+------------------------------------------Język SQL. Rozdział 6b.Podzapytania –konstrukcje zaawansowane---------------
+
+	--1.
+
+	SELECT *
+	FROM zespoly
+	WHERE id_zesp IN 
+			(SELECT z.id_zesp
+		     FROM zespoly z LEFT OUTER JOIN pracownicy p
+				ON z.id_zesp = p.id_zesp
+			 	WHERE p.id_zesp IS NULL
+			 );
+
+	--2.
+		SELECT nazwisko, COALESCE(placa_pod,0) AS "PLACA", etat  
+	FROM pracownicy p
+	WHERE COALESCE(placa_pod,0) >  (SELECT AVG(placa_pod)
+				   FROM pracownicy
+				   WHERE etat = p.etat
+				   GROUP BY etat)
+	ORDER BY PLACA DESC;
+
+	--3.
+		SELECT nazwisko, COALESCE(placa_pod,0) AS "PLACA"
+	FROM pracownicy p
+	WHERE COALESCE(placa_pod,0) > 
+					(SELECT 0.75 * COALESCE(placa_pod,0)
+					FROM pracownicy 
+					WHERE p.id_szefa = id_prac)
+	ORDER BY p.nazwisko;
+
+	--4.
+		SELECT nazwisko
+	FROM pracownicy p
+	WHERE etat = 'PROFESOR'
+		AND NOT EXISTS 
+					(SELECT *
+					FROM pracownicy
+					WHERE p.id_prac = id_szefa  
+					AND etat = 'STAZYSTA');
+
+	--5.
+		SELECT ez.nazwa, m.MAKS
+	FROM (SELECT ID, MAX(SUMA) AS "MAKS"
+		 FROM 
+			(SELECT z.id_zesp AS "ID", SUM(placa_pod) AS "SUMA"
+			 FROM pracownicy p INNER JOIN zespoly z 
+		 	 ON p.id_zesp = z.id_zesp
+		 	 GROUP BY z.id_zesp
+			 ORDER BY SUMA DESC
+			 FETCH FIRST 1 ROW ONLY) s
+		 GROUP BY ID) m
+	INNER JOIN zespoly ez ON m.ID = ez.id_zesp;
+	
+	--6. ------------------------------------------------------6 jest zrobione na okretke nie wiem o co cho
+	SELECT nazwisko, placa_pod AS "PENSJA"
+	FROM pracownicy 
+	ORDER BY pensja DESC
+	FETCH FIRST 3 ROWS WITH TIES;
+
+	--6. rowniez 
+	SELECT p.nazwisko, p.placa_pod
+	FROM pracownicy p
+	WHERE p.placa_pod >=
+		(SELECT MAX(placa_pod)
+		  FROM pracownicy
+		  WHERE placa_pod != (
+		  		(SELECT MAX(placa_pod)
+	 			 FROM pracownicy
+	   			 WHERE placa_pod !=
+		 				(SELECT MAX(placa_pod)
+	 			 		FROM pracownicy)))
+				AND placa_pod !=
+						 (SELECT MAX(placa_pod)
+	 			 		FROM pracownicy)
+						 )
+	ORDER BY p.placa_pod DESC;
+
+----------------------------------------------------
+
+	--7.
+		SELECT years.*, workers.LICZBA_PRACOWNIKOW 
+	FROM (SELECT EXTRACT(YEAR FROM zatrudniony) AS "WYR", COUNT(*) AS "LICZBA_PRACOWNIKOW"
+		 FROM pracownicy
+		 GROUP BY EXTRACT(YEAR FROM zatrudniony) ) workers
+	INNER JOIN 
+		(SELECT DISTINCT EXTRACT(YEAR FROM zatrudniony) AS "YEAR"
+		FROM pracownicy) years
+	ON years.YEAR = workers.WYR
+	ORDER BY workers.LICZBA_PRACOWNIKOW  DESC;
+
+	--8.
+	SELECT years.YEAR, (workers.LICZBA_PRACOWNIKOW) 
+		FROM (SELECT EXTRACT(YEAR FROM zatrudniony) AS "WYR", COUNT(*) AS "LICZBA_PRACOWNIKOW"
+			 FROM pracownicy
+			 GROUP BY EXTRACT(YEAR FROM zatrudniony) 
+			 ORDER BY LICZBA_PRACOWNIKOW DESC
+			 FETCH FIRST 1 ROW ONLY) workers
+		INNER JOIN 
+			 (SELECT DISTINCT EXTRACT(YEAR FROM zatrudniony) AS "YEAR"
+			 FROM pracownicy) years ON years.YEAR = workers.WYR
+	ORDER BY workers.LICZBA_PRACOWNIKOW  DESC;
+
+	------------------------------------------------------UŻYŁEM TRIKU------------------------------
+
+	--9a.
+
+	SELECT nazwisko, placa_pod,
+	(placa_pod - (SELECT AVG(placa_pod) FROM pracownicy WHERE id_zesp = p.id_zesp GROUP BY id_zesp) ) AS "ROZNICA"
+	FROM pracownicy p					  
+	ORDER BY nazwisko ASC;
+
+	--9b.
+		SELECT nazwisko, placa_pod, (placa_pod - averages.SREDNIA_ZESPOLU) AS "ROZNICA"
+	FROM pracownicy p 
+	INNER JOIN (SELECT id_zesp, AVG(placa_pod) AS "SREDNIA_ZESPOLU"
+			 FROM pracownicy 
+			 GROUP BY id_zesp) averages
+	ON p.id_zesp = averages.id_zesp
+	ORDER BY p.nazwisko ASC;
+	
+	--10a.
+		SELECT nazwisko,placa_pod,
+		(placa_pod - (SELECT AVG(placa_pod) FROM pracownicy WHERE id_zesp = p.id_zesp GROUP BY id_zesp) )
+		 AS "ROZNICA"
+		FROM pracownicy p
+		WHERE (placa_pod - (SELECT AVG(placa_pod) FROM pracownicy WHERE id_zesp = p.id_zesp GROUP BY id_zesp) )>0
+		ORDER BY nazwisko ASC;
+
+	--10b.
+		SELECT nazwisko, placa_pod, (placa_pod - averages.SREDNIA_ZESPOLU) AS "ROZNICA"
+	FROM pracownicy p 
+	INNER JOIN (SELECT id_zesp, AVG(placa_pod) AS "SREDNIA_ZESPOLU"
+			 FROM pracownicy 
+			 GROUP BY id_zesp) averages
+	ON p.id_zesp = averages.id_zesp
+	WHERE (placa_pod - averages.SREDNIA_ZESPOLU)>0
+	ORDER BY p.nazwisko ASC;
+
+	--11.
+		SELECT p.nazwisko,
+	(SELECT COUNT(*)
+		   FROM pracownicy 
+		   WHERE p.id_prac = id_szefa) AS "PODWLADNI"
+	FROM pracownicy p INNER JOIN zespoly z 
+	ON p.id_zesp = z.id_zesp
+	WHERE p.etat = 'PROFESOR' AND z.adres = 'PIOTROWO 3A'
+	ORDER BY PODWLADNI DESC;
+
+	-12.
+		SELECT z.nazwa, AVG(p.placa_pod) AS "SREDNIA_ZESPOLU",
+	(SELECT ROUND(AVG(placa_pod),2) FROM pracownicy) AS "OGOLNA_SREDNIA",	
+	CASE
+		WHEN AVG(p.placa_pod) IS NULL THEN '???'
+		WHEN (((SELECT AVG(placa_pod) FROM pracownicy) - AVG(p.placa_pod)) > 0) THEN ':)'
+		ELSE ':<'
+	END AS "NASTROJE"		
+	FROM zespoly z LEFT OUTER JOIN pracownicy p ON z.id_zesp = p.id_zesp
+	GROUP BY z.id_zesp,z.nazwa;
+
+
+	--13.
+	SELECT *
+	FROM etaty e
+	ORDER BY 
+	  		(SELECT COUNT(*)
+			FROM pracownicy p
+			WHERE p.etat = e.nazwa) DESC,
+	  		e.nazwa;
+			
+---------------------------------------Rozdział 7.Zaawansowane mechanizmy w zapytaniach-----------------------------------
+
+--1a.
+SELECT nazwisko, placa_pod
+FROM pracownicy
+ORDER BY placa_pod DESC
+FETCH FIRST 3 ROWS WITH TIES;
+
+--1b.
+SELECT ROWNUM, r.nazwisko, r.placa_pod
+FROM (SELECT nazwisko, placa_pod 
+	  FROM pracownicy 
+	  ORDER BY placa_pod DESC) r
+WHERE ROWNUM <=3;
+
+--2a.
+SELECT nazwisko,placa_pod
+FROM pracownicy
+ORDER BY placa_pod DESC
+OFFSET 5 ROWS FETCH NEXT 5 ROWS ONLY;
+
+--2b.
+SELECT nazwisko,placa_pod
+FROM (SELECT ROWNUM rnm, s.nazwisko, s.placa_pod
+FROM (SELECT nazwisko, placa_pod
+FROM pracownicy
+ORDER BY placa_pod DESC) s 
+WHERE ROWNUM <= 10)
+WHERE rnm >5
+	  
+--3.
+
+WITH srednia_placa
+AS (SELECT id_zesp,AVG(placa_pod) AS "SREDNIA" FROM pracownicy GROUP BY id_zesp)
+SELECT p.nazwisko, p.placa_pod, p.placa_pod-sp.SREDNIA AS "ROZNICA"
+FROM pracownicy p INNER JOIN srednia_placa sp 
+ON p.id_zesp = sp.id_zesp 
+WHERE p.placa_pod-sp.SREDNIA > 0
+ORDER BY p.nazwisko ASC;
+
+--4.
+
+WITH lata AS
+(SELECT DISTINCT EXTRACT(YEAR FROM zatrudniony) AS "ROK" FROM pracownicy)
+SELECT l.ROK, COUNT(*) AS "LICZBA_PRAC"
+FROM pracownicy p INNER JOIN lata l
+ON EXTRACT(YEAR FROM p.zatrudniony) = l.ROK
+GROUP BY EXTRACT(YEAR FROM p.zatrudniony),l.ROK
+ORDER BY LICZBA_PRAC DESC;
+
+--5.
+
+WITH lata AS
+(SELECT DISTINCT EXTRACT(YEAR FROM zatrudniony) AS "ROK" FROM pracownicy),
+korelacja AS
+(SELECT l.ROK, COUNT(*) AS "LICZBA_PRAC"
+FROM pracownicy p INNER JOIN lata l
+ON EXTRACT(YEAR FROM p.zatrudniony) = l.ROK
+GROUP BY EXTRACT(YEAR FROM p.zatrudniony),l.ROK
+ORDER BY LICZBA_PRAC DESC),
+maks AS 
+(SELECT MAX(LICZBA_PRAC) AS "MAKS"
+FROM korelacja k)
+SELECT k1.ROK, k2.MAKS 
+FROM korelacja k1 INNER JOIN maks k2
+ON k1.LICZBA_PRAC = k2.MAKS;
+
+--6.
+
+WITH asystenci
+AS (SELECT * 
+	FROM pracownicy
+    WHERE etat = 'ASYSTENT'),
+piotrowo 
+AS (SELECT * 
+	FROM zespoly
+	WHERE adres = 'PIOTROWO 3A')
+SELECT a.nazwisko, a.etat, p.nazwa, p.adres FROM
+asystenci a INNER JOIN piotrowo p 
+ON a.id_zesp = p.id_zesp;
+
+--7.
+
+WITH suma
+AS (SELECT id_zesp, SUM(placa_pod) AS "SUMA" 
+   FROM pracownicy 
+   GROUP BY id_zesp),
+maks 
+AS ( SELECT MAX(SUMA) AS "MAKS_SUMA_PLAC"
+	FROM suma),
+maks_id
+AS (SELECT s.id_zesp,m.MAKS_SUMA_PLAC
+   FROM suma s INNER JOIN maks m ON s.SUMA = m.MAKS_SUMA_PLAC)
+SELECT z.nazwa, m.MAKS_SUMA_PLAC
+FROM zespoly z INNER JOIN maks_id m
+ON z.id_zesp = m.id_zesp;
+
+
+--8a.
+WITH podwladni(id_prac,id_szefa,nazwisko,POZYCJA_W_HIERARCHII)
+AS (SELECT id_prac,id_szefa,nazwisko,1
+FROM pracownicy
+WHERE nazwisko = 'BRZEZINSKI'
+UNION ALL
+SELECT p.id_prac, p.id_szefa, p.nazwisko, POZYCJA_W_HIERARCHII + 1
+FROM podwladni s JOIN pracownicy p 
+ON s.id_prac = p.id_szefa)
+SEARCH DEPTH FIRST BY nazwisko 
+SET porzadek_potomkow
+SELECT nazwisko, POZYCJA_W_HIERARCHII
+FROM podwladni
+ORDER BY porzadek_potomkow;
+
+--8b.
+WITH zbior AS
+(SELECT id_prac, id_szefa, nazwisko, LEVEL AS poziom
+FROM pracownicy
+CONNECT BY id_szefa = PRIOR id_prac 
+START WITH nazwisko = 'BRZEZINSKI'
+ORDER SIBLINGS BY nazwisko)
+SELECT nazwisko,poziom FROM zbior;
+
+
+--9a.
+WITH podwladni(id_prac,id_szefa,nazwisko,POZYCJA_W_HIERARCHII,literal)
+AS (SELECT id_prac,id_szefa, nazwisko,1,'\t\'
+FROM pracownicy
+WHERE nazwisko = 'BRZEZINSKI'
+UNION ALL
+SELECT p.id_prac, p.id_szefa, literal || p.nazwisko, POZYCJA_W_HIERARCHII + 1, '\t' || literal
+FROM podwladni s JOIN pracownicy p 
+ON s.id_prac = p.id_szefa)
+SEARCH DEPTH FIRST BY nazwisko 
+SET porzadek_potomkow
+SELECT nazwisko, POZYCJA_W_HIERARCHII
+FROM podwladni
+ORDER BY porzadek_potomkow;
+
+--9b.
+WITH zbior AS
+(SELECT id_prac, id_szefa, CONCAT(LPAD('\t\t',LEVEL*2-2),nazwisko) naz, LEVEL AS poziom
+FROM pracownicy
+CONNECT BY id_szefa = PRIOR id_prac 
+START WITH nazwisko = 'BRZEZINSKI'
+ORDER SIBLINGS BY nazwisko)
+SELECT naz,poziom FROM zbior;
+
+
+---------------------------------------Rozdział 8 -----------------------------------------------------------------------
+
+--INSERT INTO pracownicy(id_prac,nazwisko,etat,id_szefa,zatrudniony,placa_pod,placa_dod,id_zesp)
+--(SELECT 250,'KOWALSKI','ASYSTENT',NULL,DATE'2015-01-13',1500,NULL,10 FROM DUAL)
+--UNION ALL
+--(SELECT 260,'ADAMSKI','ASYSTENT',NULL,DATE'201409-10',1500,NULL,10 FROM DUAL)
+--UNION ALL
+--(SELECT 270,'NOWAK','ADIUNKT',NULL,DATE'1990-05-01',2050,0,20 FROM DUAL);
+--
+--
+--SELECT *
+--FROM pracownicy
+--WHERE id_prac = 250
+--OR id_prac = 260
+--OR id_prac = 270;
+--
+
+--2.
+
+--UPDATE pracownicy
+--SET placa_pod = placa_pod * 1.1,
+--    placa_dod = COALESCE(placa_dod,100) * 1.2;
+--
+
+--3.
+--INSERT INTO zespoly(nazwa,id_zesp,adres)
+--VALUES ('BAZY DANYCH',60,'PIOTROWO 3A' );
+
+--4.
+--UPDATE pracownicy
+--SET id_zesp = (SELECT id_zesp FROM zespoly WHERE nazwa = 'BAZY DANYCH')
+--WHERE id_prac = 250 OR id_prac = 260 OR id_prac = 270;
+
+
+--select * from pracownicy where id_prac = 250 OR id_prac = 260 OR id_prac = 270;
+
+--5.
+--UPDATE pracownicy
+--SET id_szefa = (SELECT id_prac FROM pracownicy WHERE nazwisko = 'MORZY')
+--WHERE id_zesp = (SELECT id_zesp FROM zespoly WHERE nazwa = 'BAZY DANYCH');
+--
+
+--select* from pracownicy
+--WHERE id_szefa = (SELECT id_prac FROM pracownicy WHERE nazwisko = 'MORZY')
+
+--6.
+--DELETE FROM zespoly
+--WHERE nazwa = 'BAZY DANYCH'
+
+--7.
+--DELETE FROM pracownicy
+--WHERE id_zesp = (SELECT id_zesp FROM zespoly WHERE nazwa = 'BAZY DANYCH');
+--DELETE FROM zespoly
+--WHERE nazwa = 'BAZY DANYCH';
+
+--select * from zespoly where nazwa = 'BAZY DANYCH';
+--select * from pracownicy where id_zesp = (select id_zesp from zespoly where nazwa = 'BAZY DANYCH')
+
+--8.
+--SELECT nazwisko,placa_pod, (SELECT  AVG(placa_pod) *0.1
+--                                    FROM pracownicy
+--                                    WHERE id_zesp = p.id_zesp
+--                                    GROUP BY id_zesp) AS "PODWYZKA"
+--FROM pracownicy p
+--ORDER BY p.nazwisko ASC;
+
+--9.
+--UPDATE pracownicy p
+--SET placa_pod = placa_pod + (SELECT  AVG(placa_pod) *0.1
+--                                    FROM pracownicy
+--                                   WHERE id_zesp = p.id_zesp
+--                                   GROUP BY id_zesp);
+
+--10.
+--SELECT *
+--FROM pracownicy
+--ORDER BY placa_pod ASC
+--FETCH FIRST ROW WITH TIES;
+
+--11.
+--UPDATE pracownicy
+--SET
+--    placa_pod = ROUND((SELECT AVG(placa_pod) FROM pracownicy),2)
+--WHERE id_prac = (SELECT id_prac FROM pracownicy ORDER BY placa_pod ASC FETCH FIRST ROW WITH TIES);
+
+
+--12.
+--UPDATE pracownicy
+--SET placa_dod = (SELECT AVG(placa_pod) FROM pracownicy WHERE id_szefa = (SELECT id_prac FROM pracownicy WHERE nazwisko ='MORZY'))
+--WHERE id_zesp = 20;
+
+--13.
+
+--UPDATE pracownicy
+--SET placa_pod = placa_pod*1.25
+--WHERE id_zesp = (SELECT id_zesp FROM zespoly WHERE nazwa = 'SYSTEMY ROZPROSZONE');
+
+--14.
+--
+--DELETE FROM pracownicy
+--WHERE id_szefa = (SELECT id_prac FROM pracownicy WHERE nazwisko = 'MORZY')
+
+--DELETE FROM
+--    (SELECT p.id_prac FROM pracownicy p
+--    INNER JOIN pracownicy s
+--    ON p.id_szefa = s.id_prac
+--    WHERE s.nazwisko = 'MORZY');
+
+--15.
+--SELECT * FROM PRACOWNICY
+
+--16.
+
+CREATE SEQUENCE PRAC_SEQ
+START WITH 300 INCREMENT BY 10 MAX ;
+
+INSERT INTO pracownicy(nazwisko,placa_pod)
+VALUES(PRAC_SEQ.NEXTVAL,'TRABCZYNSKI',1000);
+
+
+
+
+----------------------------------------------------------9a-------------------------------------------------------------
+
+--1.
+CREATE TABLE PROJEKTY (
+ID_PROJEKTU NUMBER(4) GENERATED ALWAYS AS IDENTITY,
+OPIS_PROJEKTU VARCHAR(20),
+DATA_ROZPOCZENCIA DATE DEFAULT CURRENT_DATE,
+DATA_ZAKONCZENIA DATE,
+FUNDUSZ NUMBER(7,2)
+);
+
+INSERT INTO PROJEKTY (OPIS_PROJEKTU, DATA_ROZPOCZENCIA,DATA_ZAKONCZENIA,FUNDUSZ)
+VALUES ('Indeksy bitmapowe',
+TO_DATE('1999-04-02','YYYY-MM-DD'),
+TO_DATE('2001-08-31','YYYY-MM-DD'),
+25000);
+
+
+
+INSERT INTO PROJEKTY (OPIS_PROJEKTU, DATA_ZAKONCZENIA,FUNDUSZ)
+VALUES ('Sieci kręgosłupowe',
+NULL,19000);
+
+
+SELECT
+ID_PROJEKTU, OPIS_PROJEKTU
+FROM PROJEKTY;
+
+
+INSERT INTO PROJEKTY
+(ID_PROJEKTU,
+OPIS_PROJEKTU, 
+DATA_ROZPOCZENCIA,
+DATA_ZAKONCZENIA,
+FUNDUSZ)
+VALUES (10,'Indeksy drzewiaste', TO_DATE('2013-12-24', 'YYYY-MM-DD'), TO_DATE('2014-01-01', 'YYYY-MM-DD'), 1200);
+
+
+UPDATE PROJEKTY
+SET ID_PROJEKTU = 10
+WHERE OPIS_PROJEKTU = 'Indeksy drzewiaste';
+
+
+CREATE TABLE PROJEKTY_KOPIA 
+AS SELECT * FROM PROJEKTY
+
+INSERT INTO PROJEKTY_KOPIA
+VALUES (10,'Sieci lokalne',CURRENT_DATE,CURRENT_DATE+INTERVAL'1'YEAR,24500);
+
+
+DELETE FROM PROJEKTY
+WHERE OPIS_PROJEKTU = 'Indeksy drzewiaste';
+SELECT * FROM PROJEKT_KOPIA;
+
+SELECT object_name FROM user_objects
+ORDER BY object_name;
+
+
+
+---------------------------------------------------------DDL2--------------------------------------------------------------
+
+--1. 
+ALTER TABLE PROJEKTY
+ADD	(
+  CONSTRAINT PK_PROJEKTY PRIMARY KEY(ID_PROJEKTU),
+  CONSTRAINT UK_PROJEKTY UNIQUE(OPIS_PROJEKTU) )
+
+
+ALTER TABLE PROJEKTY
+MODIFY OPIS_PROJEKTU NOT NULL
+
+
+==============================================popraw to
+ALTER TABLE PROJEKTY 
+MODIFY DATA_ZAKONCZENIA, 
+CONSTRAINT ZK_PROJKETY CHECK (DATA_ZAKONCZENIA > DATA_ROZPOCZECIA);
+
+
+
+ALTER TABLE PROJEKTY MODIFY
+MODIFY fundusz NULL,
+CHECK( fundusz > 0);
+===========================================i dotad
+
+
+--2.
+INSERT INTO PROJEKTY 
+VALUES
+	("Indeksy bitmapowe",
+	DATE'2015-04-12',
+	DATE'2016-09-30',
+	40000);
+	--opis musi byc null
+
+--3.
+CREATE TABLE PRZYDZIALY (
+	ID_PROJEKTU NUMBER(4,0) NOT NULL, CONSTRAINT fk_przydzialy_01 FOREIGN KEY(id_projektu) REFERENCES projekty(id_projektu),
+    NR_PRACOWNIKA NUMBER(6,0) NOT NULL, CONSTRAINT fk_przydzialy_02 FOREIGN KEY(nr_pracownika) REFERENCES pracownicy(id_prac),
+  	OD DATE DEFAULT CURRENT_DATE,
+    DO DATE, CONSTRAINT chk_przydzialy_daty CHECK(DO > OD),
+    STAWKA NUMBER(7,2) CONSTRAINT chk_przydzialy_stawka CHECK(STAWKA > 0),
+    ROLA VARCHAR(20) CONSTRAINT chk_przydzialy_rola CHECK( (ROLA = 'KIERUJACY') OR (ROLA = 'ANALITYK') OR  (ROLA = 'PROGRAMISTA') )
+);
+
+
+
+
+----------------------------------------------------------INNE--------------------------------------------------------------
+
+
+--1. REKURENCJA LISTA PODWLADNYCH I SZEFOW, FAJNE
+WITH szef_podwladny(id_prac,id_szefa) AS 
+(SELECT id_prac, id_szefa
+FROM pracownicy 
+UNION ALL
+SELECT p.id_prac, sp.id_szefa
+FROM pracownicy p JOIN szef_podwladny sp
+ON p.id_szefa = sp.id_prac)
+SELECT szp.id_szefa, szef.nazwisko, COUNT(*) AS "LICZBA_PODWLADNYCH",
+LISTAGG(szp.id_prac, ', ')
+         WITHIN GROUP (ORDER BY szp.id_prac) AS "id_pracownikow",
+LISTAGG(podwladny.nazwisko, ', ')
+         WITHIN GROUP (ORDER BY podwladny.nazwisko) AS "nazwiska_pracownikow"		 
+FROM szef_podwladny szp 
+INNER JOIN pracownicy szef ON szp.id_szefa = szef.id_prac
+INNER JOIN pracownicy podwladny ON szp.id_prac = podwladny.id_prac
+WHERE szp.id_szefa IS NOT NULL
+GROUP BY szp.id_szefa,szef.nazwisko;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
